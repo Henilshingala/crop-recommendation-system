@@ -43,6 +43,13 @@ export default function ChatWidget() {
     const question = inputText.trim();
     if (!question || isLoading) return;
 
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      setIsRecording(false);
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       text: question,
@@ -99,6 +106,52 @@ export default function ChatWidget() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const startRecording = () => {
+    // If already recording, stop it (toggle behavior)
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = i18n.language || "en-US";
+    recognition.continuous = true;
+    recognition.interimResults = true; 
+    
+    // We clear the input box on new recording for a clean experience
+    setInputText("");
+
+    recognition.onstart = () => setIsRecording(true);
+    
+    recognition.onresult = (event: any) => {
+      let currentTranscript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        currentTranscript += event.results[i][0].transcript;
+      }
+      // Completely replace the text with the current session's transcript
+      setInputText(currentTranscript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => setIsRecording(false);
+
+    recognition.start();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -171,11 +224,30 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <div className="chat-input-area">
+          <div className="chat-input-area" style={{ display: 'flex', alignItems: 'center' }}>
+            <button
+              className={`chat-mic-btn ${isRecording ? "recording" : ""}`}
+              onClick={startRecording}
+              disabled={isLoading}
+              title="Speak"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                padding: '0 8px',
+                color: isRecording ? '#ef4444' : '#6b7280',
+                transition: 'color 0.2s'
+              }}
+              aria-label="Voice input"
+            >
+              🎤
+            </button>
             <input
               ref={inputRef}
               type="text"
               className="chat-input"
+              style={{ flex: 1 }}
               placeholder={t("chat.placeholder")}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}

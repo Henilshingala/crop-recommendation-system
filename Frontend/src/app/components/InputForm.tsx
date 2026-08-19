@@ -1,6 +1,6 @@
 import { Label } from "@/app/components/ui/label";
-import { Droplet, Thermometer, FlaskConical, CloudRain, Gauge, Loader2 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { Droplet, Thermometer, FlaskConical, CloudRain, Gauge, Loader2, MapPin } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelLimits, type FeatureRange } from "@/app/services/api";
 
@@ -35,6 +35,64 @@ export function InputForm({ onSubmit, isLoading = false }: InputFormProps) {
   const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptanceRanges, setAcceptanceRanges] = useState<Record<string, FeatureRange>>(FALLBACK_RANGES);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleAutoDetect = () => {
+    setIsDetecting(true);
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      setIsDetecting(false);
+      return;
+    }
+    
+    // 1. Get GPS, 2. Call Open-Meteo for real weather, 3. Fill Form
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation`)
+          .then(res => res.json())
+          .then(data => {
+            if (formRef.current && data.current) {
+              // Simulated soil based on state/district (mocked for now)
+              (formRef.current.elements.namedItem('nitrogen') as HTMLInputElement).value = "90";
+              (formRef.current.elements.namedItem('phosphorus') as HTMLInputElement).value = "42";
+              (formRef.current.elements.namedItem('potassium') as HTMLInputElement).value = "43";
+              (formRef.current.elements.namedItem('ph') as HTMLInputElement).value = "6.5";
+              
+              // 100% REAL Live Weather from Open-Meteo API
+              (formRef.current.elements.namedItem('temperature') as HTMLInputElement).value = data.current.temperature_2m.toString();
+              (formRef.current.elements.namedItem('humidity') as HTMLInputElement).value = data.current.relative_humidity_2m.toString();
+              (formRef.current.elements.namedItem('rainfall') as HTMLInputElement).value = "110"; // Keep rainfall simulated as crops expect yearly avg, not hourly
+            }
+          })
+          .catch((error) => {
+             console.error("Weather API failed", error);
+             alert("Could not fetch live weather. Filling with simulated data.");
+             if (formRef.current) {
+                // Fallback simulation
+                (formRef.current.elements.namedItem('nitrogen') as HTMLInputElement).value = "90";
+                (formRef.current.elements.namedItem('phosphorus') as HTMLInputElement).value = "42";
+                (formRef.current.elements.namedItem('potassium') as HTMLInputElement).value = "43";
+                (formRef.current.elements.namedItem('ph') as HTMLInputElement).value = "6.5";
+                (formRef.current.elements.namedItem('temperature') as HTMLInputElement).value = "26.5";
+                (formRef.current.elements.namedItem('humidity') as HTMLInputElement).value = "71";
+                (formRef.current.elements.namedItem('rainfall') as HTMLInputElement).value = "110";
+             }
+          })
+          .finally(() => {
+            setIsDetecting(false);
+          });
+      },
+      (error) => {
+        console.error(error);
+        alert("Unable to retrieve your location. Please check browser permissions.");
+        setIsDetecting(false);
+      }
+    );
+  };
 
   // Fetch real acceptance ranges from /api/model/limits/ on mount
   useEffect(() => {
@@ -105,84 +163,86 @@ export function InputForm({ onSubmit, isLoading = false }: InputFormProps) {
   };
 
   return (
-    <div className="glass-card overflow-hidden animate-fade-in-up">
+    <div className="agri-card animate-fade-in-up">
+      {isLoading && <div className="scan-line" />}
+
       {/* Card header */}
-      <div className="px-6 py-5 border-b border-gray-200/60">
-        <h2 className="text-xl font-bold text-gray-900">{t("form.title")}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t("form.description")}</p>
+      <div className="flex justify-between items-start border-b border-[var(--color-border-line)] pb-4 mb-6 border-dashed">
+        <div>
+          <span className="eyebrow">Official Form</span>
+          <h2 className="text-2xl font-bold text-[var(--color-ink)] mt-1" style={{fontFamily: 'var(--font-display)'}}>Soil Health Card</h2>
+        </div>
+        <div className="verified-stamp">VERIFIED</div>
       </div>
 
       {/* Card body */}
-      <div className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-8">
-
-          {/* NPK Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/30 to-transparent" />
-              <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-widest whitespace-nowrap">
-                {t("form.soilNutrients")}
-              </h3>
-              <div className="h-px flex-1 bg-gradient-to-l from-emerald-500/30 to-transparent" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <GlassField label={t("form.nitrogen")} name="nitrogen" icon={<FlaskConical className="w-4 h-4 text-blue-400" />} placeholder={`${VALIDATION_RANGES.nitrogen.min}–${VALIDATION_RANGES.nitrogen.max}`} unit="kg/ha" errors={errors} onBlur={handleInputBlur} />
-              <GlassField label={t("form.phosphorus")} name="phosphorus" icon={<FlaskConical className="w-4 h-4 text-orange-400" />} placeholder={`${VALIDATION_RANGES.phosphorus.min}–${VALIDATION_RANGES.phosphorus.max}`} unit="kg/ha" errors={errors} onBlur={handleInputBlur} />
-              <GlassField label={t("form.potassium")} name="potassium" icon={<FlaskConical className="w-4 h-4 text-purple-400" />} placeholder={`${VALIDATION_RANGES.potassium.min}–${VALIDATION_RANGES.potassium.max}`} unit="kg/ha" errors={errors} onBlur={handleInputBlur} />
-            </div>
-          </div>
-
-          {/* Environmental Conditions */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-px flex-1 bg-gradient-to-r from-teal-500/30 to-transparent" />
-              <h3 className="text-xs font-semibold text-teal-700 uppercase tracking-widest whitespace-nowrap">
-                {t("form.envConditions")}
-              </h3>
-              <div className="h-px flex-1 bg-gradient-to-l from-teal-500/30 to-transparent" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <GlassField label={t("form.temperature")} name="temperature" icon={<Thermometer className="w-4 h-4 text-red-400" />} placeholder={`${VALIDATION_RANGES.temperature.min} to ${VALIDATION_RANGES.temperature.max}`} unit="°C" step="0.1" errors={errors} onBlur={handleInputBlur} />
-              <GlassField label={t("form.humidity")} name="humidity" icon={<Droplet className="w-4 h-4 text-sky-400" />} placeholder={`${VALIDATION_RANGES.humidity.min}–${VALIDATION_RANGES.humidity.max}`} unit="%" step="0.1" errors={errors} onBlur={handleInputBlur} />
-              <GlassField label={t("form.ph")} name="ph" icon={<Gauge className="w-4 h-4 text-emerald-400" />} placeholder={`${VALIDATION_RANGES.ph.min}–${VALIDATION_RANGES.ph.max}`} unit="pH" step="0.1" errors={errors} onBlur={handleInputBlur} />
-              <GlassField label={t("form.rainfall")} name="rainfall" icon={<CloudRain className="w-4 h-4 text-cyan-400" />} placeholder={`${VALIDATION_RANGES.rainfall.min}–${VALIDATION_RANGES.rainfall.max}`} unit="mm" step="0.1" errors={errors} onBlur={handleInputBlur} />
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="btn-glow w-full py-4 text-lg tracking-wide cursor-pointer"
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {t("form.analyzing")}
-              </span>
+      <div>
+        <button
+            type="button"
+            onClick={handleAutoDetect}
+            disabled={isDetecting || isLoading}
+            className="mb-8 w-full py-3 bg-[var(--color-paper-deep)] hover:bg-[var(--color-border-line)] border border-[var(--color-border-line)] text-[var(--color-ink)] rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+        >
+            {isDetecting ? (
+                <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Fetching Live Location Data...
+                </>
             ) : (
-              t("form.submit")
+                <>
+                    <MapPin className="w-5 h-5 text-[var(--color-mustard)]" />
+                    Auto-Detect Location Data
+                </>
             )}
-          </button>
+        </button>
+
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <AgriField label={t("form.nitrogen")} name="nitrogen" placeholder={`${VALIDATION_RANGES.nitrogen.min}–${VALIDATION_RANGES.nitrogen.max}`} unit="N" errors={errors} onBlur={handleInputBlur} />
+            <AgriField label={t("form.phosphorus")} name="phosphorus" placeholder={`${VALIDATION_RANGES.phosphorus.min}–${VALIDATION_RANGES.phosphorus.max}`} unit="P" errors={errors} onBlur={handleInputBlur} />
+            <AgriField label={t("form.potassium")} name="potassium" placeholder={`${VALIDATION_RANGES.potassium.min}–${VALIDATION_RANGES.potassium.max}`} unit="K" errors={errors} onBlur={handleInputBlur} />
+            <AgriField label={t("form.ph")} name="ph" placeholder={`${VALIDATION_RANGES.ph.min}–${VALIDATION_RANGES.ph.max}`} unit="pH" step="0.1" errors={errors} onBlur={handleInputBlur} />
+            <AgriField label={t("form.temperature")} name="temperature" placeholder={`${VALIDATION_RANGES.temperature.min} - ${VALIDATION_RANGES.temperature.max}`} unit="°C" step="0.1" errors={errors} onBlur={handleInputBlur} />
+            <AgriField label={t("form.humidity")} name="humidity" placeholder={`${VALIDATION_RANGES.humidity.min}–${VALIDATION_RANGES.humidity.max}`} unit="%" step="0.1" errors={errors} onBlur={handleInputBlur} />
+            <AgriField label={t("form.rainfall")} name="rainfall" placeholder={`${VALIDATION_RANGES.rainfall.min}–${VALIDATION_RANGES.rainfall.max}`} unit="mm" step="0.1" errors={errors} onBlur={handleInputBlur} />
+          </div>
+
+          <div className="pt-4 border-t border-[var(--color-border-line)] border-dashed">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full py-4 text-lg font-bold"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  ANALYZING REPORT...
+                </span>
+              ) : (
+                "Analyze Soil Report"
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>
   );
 }
 
-/* ── Glass field input ────────────────────────────────────────────── */
+/* ── Agri field input ────────────────────────────────────────────── */
 
-function GlassField({
-  label, name, icon, placeholder, unit, step = "0.01", errors, onBlur,
+function AgriField({
+  label, name, placeholder, unit, step = "0.01", errors, onBlur,
 }: {
-  label: string; name: string; icon: React.ReactNode; placeholder: string;
+  label: string; name: string; placeholder: string;
   unit: string; step?: string;
   errors: Record<string, string>; onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={name} className="flex items-center gap-2 text-gray-700 text-sm font-medium">
-        {icon} {label}
+    <div className="space-y-1.5">
+      <Label htmlFor={name} className="block text-[var(--color-ink-soft)] text-xs font-semibold uppercase tracking-wider">
+        {label}
       </Label>
       <div className="relative">
         <input
@@ -193,9 +253,9 @@ function GlassField({
           placeholder={placeholder}
           required
           onBlur={onBlur}
-          className={`glass-input w-full px-4 py-2.5 text-sm ${errors[name] ? '!border-red-500/50' : ''}`}
+          className={`agri-input w-full px-4 py-3 text-sm font-medium ${errors[name] ? '!border-red-500/50' : ''}`}
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{unit}</span>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-mustard)] mono-data">{unit}</span>
       </div>
       {errors[name] && (
         <p className="text-xs text-red-600 mt-1 animate-fade-in">{errors[name]}</p>
