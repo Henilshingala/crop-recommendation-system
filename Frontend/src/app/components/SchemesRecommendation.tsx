@@ -63,12 +63,10 @@ export function SchemesRecommendation() {
     <div className="space-y-8 animate-fade-in pb-10">
       
       {/* ── Filters Section ── */}
-      <div className="glass-card p-6 md:p-8 relative overflow-hidden">
-        {/* Simple decoration */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl" />
+      <div className="agri-card p-6 md:p-8 relative overflow-hidden">
         
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-          <Search className="w-5 h-5 text-emerald-600" />
+        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-6 flex items-center gap-2" style={{fontFamily: 'var(--font-display)'}}>
+          <Search className="w-5 h-5 text-[var(--color-green-deep)]" />
           {t("schemes.findTitle")}
         </h2>
         
@@ -77,23 +75,23 @@ export function SchemesRecommendation() {
             
             {/* keyword */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">{t("schemes.keywordLabel")}</label>
+              <label className="eyebrow block mb-1">{t("schemes.keywordLabel")}</label>
               <input
                 type="text"
                 placeholder={t("schemes.keywordLabel")}
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all placeholder:text-gray-400 bg-white/50 backdrop-blur-sm shadow-sm"
+                className="agri-input py-2"
               />
             </div>
 
             {/* State */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">{t("schemes.stateLabel")}</label>
+              <label className="eyebrow block mb-1">{t("schemes.stateLabel")}</label>
               <select
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all bg-white/50 backdrop-blur-sm shadow-sm"
+                className="agri-input py-2"
               >
                 <option value="">All India</option>
                 {options.states.filter(s => s !== "All India").map(s => (
@@ -106,7 +104,7 @@ export function SchemesRecommendation() {
           <button 
              type="submit" 
              disabled={loading}
-             className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+             className="btn-primary w-full h-11 flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
             {t("schemes.searchButton")}
@@ -135,10 +133,10 @@ export function SchemesRecommendation() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {schemes.map((scheme, idx) => (
-            <div key={idx} className="glass-card p-6 flex flex-col hover:border-emerald-300 transition-all hover:shadow-lg hover:shadow-emerald-500/5 group">
+            <div key={idx} className="agri-card p-6 flex flex-col group">
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-4">
-                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-2">
+                  <h3 className="text-xl font-bold text-[var(--color-ink)] group-hover:text-[var(--color-green-deep)] transition-colors line-clamp-2" style={{fontFamily: 'var(--font-display)'}}>
                     {scheme.scheme_name}
                   </h3>
                 </div>
@@ -149,12 +147,12 @@ export function SchemesRecommendation() {
                 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {scheme.categories.slice(0, 3).map((cat, i) => (
-                    <span key={i} className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100/50">
+                    <span key={i} className="px-2.5 py-1 text-xs font-medium bg-[var(--color-paper-deep)] text-[var(--color-ink)] rounded border border-[var(--color-border-line)]">
                       {cat}
                     </span>
                   ))}
                   {scheme.categories.length > 3 && (
-                    <span className="px-2.5 py-1 text-xs font-medium bg-gray-50 text-gray-600 rounded-md border border-gray-100">
+                    <span className="px-2.5 py-1 text-xs font-medium bg-[var(--color-paper-deep)] text-[var(--color-ink-soft)] rounded border border-[var(--color-border-line)]">
                       +{scheme.categories.length - 3} more
                     </span>
                   )}
@@ -178,7 +176,7 @@ export function SchemesRecommendation() {
                   href={scheme.url || '#'} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-gray-50 hover:bg-emerald-50 text-emerald-600 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-colors border border-gray-200 hover:border-emerald-200"
+                  className="btn-secondary py-1.5 px-3 text-xs inline-flex items-center gap-1.5 whitespace-nowrap"
                 >
                   View Details
                   <ExternalLink className="w-3.5 h-3.5" />

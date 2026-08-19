@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
 import { InputForm } from "@/app/components/InputForm";
@@ -7,7 +7,7 @@ import { SchemesRecommendation } from "@/app/components/SchemesRecommendation";
 import { WeatherDashboard } from "@/app/components/WeatherDashboard";
 import { DiseaseDetection } from "@/app/components/DiseaseDetection";
 import ChatWidget from "@/app/components/ChatWidget";
-import { Sprout, Wheat, ShieldAlert, Globe, CloudSun, Stethoscope } from "lucide-react";
+import { Sprout, Wheat, ShieldAlert, Globe, CloudSun, Stethoscope, Loader2 } from "lucide-react";
 import { getPrediction, type PredictionResponse, type PredictionInput } from "@/app/services/api";
 
 const LANGUAGES = [
@@ -35,6 +35,49 @@ const LANGUAGES = [
   { code: "te", label: "తెలుగు" },
   { code: "ur", label: "اردو" },
 ];
+
+function AILoadingSequence() {
+  const [step, setStep] = useState(0);
+  
+  const steps = [
+    "Analyzing Nitrogen, Phosphorus, Potassium levels...",
+    "Fetching live geospatial weather data...",
+    "Cross-referencing historical market demand...",
+    "Running Random Forest ML prediction model...",
+    "Match found! Generating advisory..."
+  ];
+
+  useEffect(() => {
+    if (step < steps.length - 1) {
+      const timer = setTimeout(() => {
+        setStep(s => s + 1);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
+  return (
+    <div className="agri-card p-8 md:p-12 flex flex-col justify-center animate-fade-in relative overflow-hidden min-h-[300px]">
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at center, var(--color-ink) 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <div className="relative z-10 w-full max-w-md mx-auto space-y-5">
+        {steps.map((text, i) => (
+          <div key={i} className={`flex items-center gap-4 transition-all duration-500 ${i === step ? 'opacity-100 translate-x-0' : i < step ? 'opacity-40 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+            {i < step ? (
+              <div className="w-6 h-6 rounded-full bg-[var(--color-green-deep)] flex items-center justify-center flex-shrink-0 shadow-sm">
+                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              </div>
+            ) : i === step ? (
+              <Loader2 className="w-6 h-6 animate-spin text-[var(--color-mustard)] flex-shrink-0" />
+            ) : (
+              <div className="w-6 h-6 rounded-full border-2 border-[var(--color-border-line)] flex-shrink-0" />
+            )}
+            <p className={`text-sm md:text-base ${i === step ? 'font-bold text-[var(--color-ink)]' : 'text-[var(--color-ink-soft)]'}`}>{text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -177,9 +220,8 @@ export default function App() {
 
             {/* Loading */}
             {isLoading && (
-              <div className="agri-card p-16 flex flex-col items-center justify-center gap-4 animate-fade-in">
-                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-mustard)]" />
-                <p className="text-[var(--color-ink)] font-medium mono-data text-sm">ANALYZING SOIL DATA...</p>
+              <div className="animate-fade-in-up scroll-mt-24 mt-8">
+                <AILoadingSequence />
               </div>
             )}
 

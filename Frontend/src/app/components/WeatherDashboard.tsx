@@ -144,25 +144,23 @@ function SearchableDropdown({
             setTimeout(() => inputRef.current?.focus(), 50);
           }
         }}
-        className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl border transition-all text-left
-          ${disabled || loading
-            ? "bg-gray-100/50 border-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-white/60 backdrop-blur-sm border-gray-200 hover:border-emerald-300 text-gray-700 cursor-pointer shadow-sm"
-          }
-          ${isOpen ? "ring-2 ring-emerald-500/30 border-emerald-400" : ""}
+        className={`agri-input w-full flex items-center gap-2 cursor-pointer transition-all text-left
+          ${disabled || loading ? "cursor-not-allowed text-[var(--color-ink-soft)]" : ""}
+          ${isOpen ? "!border-b-[var(--color-green-deep)]" : ""}
         `}
+        style={{ fontFamily: 'var(--font-sans)' }}
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 text-emerald-500/70 animate-spin flex-shrink-0" />
+          <Loader2 className="w-4 h-4 text-[var(--color-ink-soft)] animate-spin flex-shrink-0" />
         ) : (
-          icon && <span className="text-emerald-500/70 flex-shrink-0">{icon}</span>
+          icon && <span className="text-[var(--color-ink-soft)] flex-shrink-0">{icon}</span>
         )}
-        <span className={`flex-1 truncate ${!value ? "text-gray-400" : "text-gray-800 font-medium"}`}>
+        <span className={`flex-1 truncate text-sm font-normal ${!value ? "text-[var(--color-ink-soft)]" : "text-[var(--color-ink)]"}`}>
           {loading ? "Loading..." : (value || placeholder)}
         </span>
         {value && !disabled && !loading && (
           <X
-            className="w-4 h-4 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+            className="w-4 h-4 text-[var(--color-ink-soft)] hover:text-red-500 transition-colors flex-shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -170,19 +168,19 @@ function SearchableDropdown({
             }}
           />
         )}
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-4 h-4 text-[var(--color-ink-soft)] transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && !disabled && !loading && (
-        <div className="absolute z-50 mt-2 w-full bg-white/95 backdrop-blur-xl border border-gray-200 rounded-xl shadow-2xl shadow-black/10 overflow-hidden animate-fade-in">
+        <div className="absolute z-50 mt-2 w-full bg-[var(--color-paper-deep)] backdrop-blur-xl border border-[var(--color-border-line)] rounded-xl shadow-2xl shadow-black/10 overflow-hidden animate-fade-in">
           {/* Search input */}
-          <div className="p-2 border-b border-gray-100">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50/80 rounded-lg">
-              <Search className="w-4 h-4 text-gray-400" />
+          <div className="p-2 border-b border-[var(--color-border-line)]">
+            <div className="flex items-center gap-2 px-3 py-2 bg-[var(--color-paper)] rounded-lg">
+              <Search className="w-4 h-4 text-[var(--color-ink-soft)]" />
               <input
                 ref={inputRef}
                 type="text"
-                className="flex-1 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 outline-none"
+                className="flex-1 bg-transparent text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-soft)] outline-none"
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -193,15 +191,15 @@ function SearchableDropdown({
           {/* Options list */}
           <div className="max-h-52 overflow-y-auto overscroll-contain">
             {filtered.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-400">No results found</div>
+              <div className="px-4 py-6 text-center text-sm text-[var(--color-ink-soft)]">No results found</div>
             ) : (
               filtered.map((opt) => (
                 <button
                   key={opt}
                   type="button"
                   onClick={() => handleSelect(opt)}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-emerald-50/80
-                    ${opt === value ? "bg-emerald-50 text-emerald-700 font-medium" : "text-gray-700"}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-normal transition-colors hover:bg-[var(--color-paper)]
+                    ${opt === value ? "bg-[var(--color-paper)] text-[var(--color-green-deep)] font-medium" : "text-[var(--color-ink)]"}
                   `}
                 >
                   {opt}
@@ -476,23 +474,18 @@ export function WeatherDashboard() {
   return (
     <div className="space-y-8 animate-fade-in pb-10">
       {/* ── Location Selection ── */}
-      <div className="glass-card p-6 md:p-8 relative z-20">
-        {/* Decorative blur */}
-        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-56 h-56 bg-sky-400/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-emerald-400/10 rounded-full blur-2xl" />
-        </div>
+      <div className="agri-card p-6 md:p-8 relative z-20 !overflow-visible">
 
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 relative z-10">
-          <MapPin className="w-5 h-5 text-emerald-600" />
+        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-6 flex items-center gap-2 relative z-10" style={{fontFamily: 'var(--font-display)'}}>
+          <MapPin className="w-5 h-5 text-[var(--color-green-deep)]" />
           {t("weather.selectLocation")}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
           {/* State */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+            <label className="eyebrow block mb-1">
+              <MapPin className="w-3.5 h-3.5 inline mr-1 text-[var(--color-green-deep)]" />
               {t("weather.state")}
             </label>
             <SearchableDropdown
@@ -507,8 +500,8 @@ export function WeatherDashboard() {
 
           {/* District */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+            <label className="eyebrow block mb-1">
+              <Building2 className="w-3.5 h-3.5 inline mr-1 text-[var(--color-green-deep)]" />
               {t("weather.district") || "District"}
             </label>
             <SearchableDropdown
@@ -524,8 +517,8 @@ export function WeatherDashboard() {
 
           {/* Sub-district */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
-              <MapIcon className="w-3.5 h-3.5 text-emerald-500" />
+            <label className="eyebrow block mb-1">
+              <MapIcon className="w-3.5 h-3.5 inline mr-1 text-[var(--color-green-deep)]" />
               {t("weather.subDistrict") || "Sub-district / Taluka"}
             </label>
             <SearchableDropdown
@@ -541,8 +534,8 @@ export function WeatherDashboard() {
 
           {/* Village / City / Town */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
-              <Home className="w-3.5 h-3.5 text-emerald-500" />
+            <label className="eyebrow block mb-1">
+              <Home className="w-3.5 h-3.5 inline mr-1 text-[var(--color-green-deep)]" />
               {t("weather.village") || "Village / City / Town"}
             </label>
             <SearchableDropdown
